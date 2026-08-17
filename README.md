@@ -27,7 +27,10 @@ Standard operating systems typically bind generic class drivers (such as `usb-st
   - Automatically identifies endpoint transfer types (**Bulk**, **Interrupt**, **Isochronous**, or **Control**).
   - Determines transfer direction (**IN** - Device to Host vs. **OUT** - Host to Device).
   - Reads maximum packet size (`wMaxPacketSize`) and endpoint addresses.
-- **Clean Lifecycle Management**: Gracefully handles device hotplug and removal with proper reference counting (`usb_put_dev()`).
+- **Sysfs User-Space Telemetry Interface (`/sys/.../usb_stats`)**:
+  - Exposes live device metrics (VID:PID, Manufacturer, Product, Endpoint Count, USB Bus Speed) directly via a read-only sysfs file.
+  - Allows user-space applications (scripts, monitoring tools) to read device health without root or parsing `dmesg`.
+- **Clean Lifecycle Management**: Gracefully handles device hotplug and removal with proper reference counting (`usb_put_dev()`) and sysfs cleanup.
 
 ---
 
@@ -118,7 +121,24 @@ sudo dmesg -w
 
 ---
 
-### 5. Unload the Driver
+### 5. Query Live Hardware Telemetry via Sysfs
+Instead of relying only on `dmesg`, user-space programs can directly query the `/sys` file system:
+```bash
+cat /sys/bus/usb/drivers/usb_driver/*/usb_stats
+```
+
+**Output:**
+```text
+VID:PID       : 0781:5567
+Manufacturer  : SanDisk
+Product       : Cruzer Blade
+Endpoints     : 2
+Speed         : high-speed
+```
+
+---
+
+### 6. Unload the Driver
 Remove the kernel module when done:
 ```bash
 sudo rmmod usb_driver

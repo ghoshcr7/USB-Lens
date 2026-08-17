@@ -9,6 +9,32 @@ static struct usb_device *device;
 static struct usb_device_id skel_table[] = {{USB_DEVICE(0x0781, 0x5567)}, {}};
 MODULE_DEVICE_TABLE(usb, skel_table);
 
+/* Sysfs attribute callback: exposes real-time USB telemetry to user space */
+static ssize_t usb_stats_show(struct device *dev,
+                              struct device_attribute *attr, char *buf) {
+  struct usb_interface *intf = to_usb_interface(dev);
+  struct usb_device *udev = interface_to_usbdev(intf);
+  char mfg[64] = "Unknown", prod[64] = "Unknown";
+
+  if (udev->descriptor.iManufacturer)
+    usb_string(udev, udev->descriptor.iManufacturer, mfg, sizeof(mfg));
+  if (udev->descriptor.iProduct)
+    usb_string(udev, udev->descriptor.iProduct, prod, sizeof(prod));
+
+  return scnprintf(buf, PAGE_SIZE,
+                   "VID:PID       : %04X:%04X\n"
+                   "Manufacturer  : %s\n"
+                   "Product       : %s\n"
+                   "Endpoints     : %d\n"
+                   "Speed         : %s\n",
+                   le16_to_cpu(udev->descriptor.idVendor),
+                   le16_to_cpu(udev->descriptor.idProduct),
+                   mfg, prod,
+                   intf->cur_altsetting->desc.bNumEndpoints,
+                   usb_speed_string(udev->speed));
+}
+static DEVICE_ATTR_RO(usb_stats);
+
 static int skel_probe(struct usb_interface *interface,
                       const struct usb_device_id *id) {
   struct usb_host_interface *iface_desc;
@@ -55,10 +81,15 @@ static int skel_probe(struct usb_interface *interface,
            usb_endpoint_dir_in(endpoint) ? "IN" : "OUT");
   }
 
+  /* Register sysfs attribute for user-space telemetry (/sys/.../usb_stats) */
+  if (device_create_file(&interface->dev, &dev_attr_usb_stats))
+    dev_warn(&interface->dev, "Failed to create sysfs usb_stats file\n");
+
   return 0;
 }
 
 static void skel_disconnect(struct usb_interface *interface) {
+  device_remove_file(&interface->dev, &dev_attr_usb_stats);
   usb_put_dev(device);
   printk(KERN_INFO "Pen drive removed\n");
 }
