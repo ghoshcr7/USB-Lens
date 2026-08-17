@@ -120,5 +120,4 @@ static void __exit usb_skel_exit(void) { usb_deregister(&skel_driver); }
 module_exit(usb_skel_exit);
 
 MODULE_LICENSE("GPL");
-MODULE_AUTHOR("lovepreet");
-MODULE_DESCRIPTION("USB pendrive registration driver");
+MODULE_DESCRIPTION("USB-Lens: USB device introspection & telemetry driver");

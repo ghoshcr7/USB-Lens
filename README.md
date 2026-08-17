@@ -1,6 +1,6 @@
-# Custom Linux USB Device Driver
+# USB-Lens 🔍
 
-A custom Linux Kernel Module (LKM) designed for USB device detection, hardware introspection, descriptor querying, and endpoint parsing.
+**USB-Lens** is a custom Linux Kernel Module (LKM) designed for real-time USB hardware introspection, descriptor querying, endpoint topology analysis, and user-kernel sysfs telemetry.
 
 ---
 
